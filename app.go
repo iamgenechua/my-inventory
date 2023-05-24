@@ -36,17 +36,10 @@ func (app *App) PopulateDatabase() error {
 		panic("failed to create Product table")
 	}
 
-	// clear Product table first
-	result := app.DB.Where("1=1").Delete(&Product{})
-	if result.Error != nil {
-		panic("failed to clear the table")
-		return result.Error
-	}
-
 	// Add products into Product table
 	products := []*Product{
-		{ID: 1, Name: "chair", Quantity: 100, Price: 200},
-		{ID: 2, Name: "desk", Quantity: 800, Price: 600.00},
+		{Name: "chair", Quantity: 100, Price: 200},
+		{Name: "desk", Quantity: 800, Price: 600.00},
 	}
 
 	app.DB.Create(&products) // pass pointer of data to create
@@ -60,7 +53,17 @@ func (app *App) CloseDatabase() error {
 		panic("failed to get DB instance")
 		return err
 	}
+
+	// clear Product table
+	result := app.DB.Where("1=1").Delete(&Product{})
+	if result.Error != nil {
+		panic("failed to clear the table")
+		return result.Error
+	}
+
 	dbSQL.Close()
+
+	log.Println("closed")
 
 	return nil
 }
@@ -111,10 +114,29 @@ func (app *App) getProduct(w http.ResponseWriter, r *http.Request) {
 	sendResponse(w, http.StatusOK, product)
 }
 
+func (app *App) createProduct(w http.ResponseWriter, r *http.Request) {
+	product := Product{}
+	err := json.NewDecoder(r.Body).Decode(&product) // decode request body into product struct
+
+	if err != nil {
+		sendError(w, http.StatusBadRequest, "Invalid request payload")
+		return
+	}
+
+	err = product.createProduct(app.DB)
+
+	if err != nil {
+		sendError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	sendResponse(w, http.StatusCreated, product)
+}
+
 func (app *App) handleRoutes() {
 	app.Router.HandleFunc("/products", app.getProducts).Methods("GET")
 	app.Router.HandleFunc("/product/{id}", app.getProduct).Methods("GET")
-
+	app.Router.HandleFunc("/product", app.createProduct).Methods("POST")
 }
 
 func getProducts(db *gorm.DB) ([]Product, error) {
@@ -126,4 +148,13 @@ func getProducts(db *gorm.DB) ([]Product, error) {
 	}
 
 	return products, nil
+}
+
+func (p *Product) createProduct(db *gorm.DB) error {
+	result := db.Select("Name", "Quantity", "Price").Create(&p)
+	if result.Error != nil {
+		return result.Error
+	}
+
+	return nil
 }
