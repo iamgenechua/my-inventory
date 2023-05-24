@@ -7,6 +7,7 @@ import (
 	"gorm.io/gorm"
 	"log"
 	"net/http"
+	"strconv"
 )
 
 type App struct {
@@ -25,7 +26,7 @@ func (app *App) Initialize() error {
 	}
 
 	app.Router = mux.NewRouter().StrictSlash(true)
-
+	app.handleRoutes()
 	return nil
 }
 
@@ -90,17 +91,39 @@ func (app *App) getProducts(w http.ResponseWriter, r *http.Request) {
 	sendResponse(w, http.StatusOK, products)
 }
 
-func getProducts(db *gorm.DB) ([]Product, error) {
+func (app *App) getProduct(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id, err := strconv.Atoi(vars["id"])
+
+	if err != nil {
+		sendError(w, http.StatusBadRequest, "Invalid product ID")
+		return
+	}
+
 	product := Product{}
-	result := db.Find(&product)
+	result := app.DB.First(&product, id)
+
+	if result.Error != nil {
+		sendError(w, http.StatusNotFound, "Product not found")
+		return
+	}
+
+	sendResponse(w, http.StatusOK, product)
+}
+
+func (app *App) handleRoutes() {
+	app.Router.HandleFunc("/products", app.getProducts).Methods("GET")
+	app.Router.HandleFunc("/product/{id}", app.getProduct).Methods("GET")
+
+}
+
+func getProducts(db *gorm.DB) ([]Product, error) {
+	products := make([]Product, 0)
+	result := db.Find(&products)
 
 	if result.Error != nil {
 		return nil, result.Error
 	}
 
-	return []Product{product}, nil // TODO
-}
-
-func (app *App) handleRoutes() {
-	app.Router.HandleFunc("/products", getProducts).Methods("GET")
+	return products, nil
 }
