@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"github.com/gorilla/mux"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -67,6 +68,39 @@ func (app *App) Run(address string) {
 	log.Fatal(http.ListenAndServe(address, app.Router)) // log errors, if any
 }
 
-//func (app *App) handleRoutes() {
-//	app.Router.HandleFunc("/products", getProducts).Methods("GET")
-//}
+func sendResponse(w http.ResponseWriter, statusCode int, payload interface{}) {
+	response, _ := json.Marshal(payload) // serialize payload into json format
+	w.Header().Set("Content-type", "application/json")
+	w.WriteHeader(statusCode) // sets HTTP status code of the response
+	w.Write(response)         // writes to the httpResponseWriter (sends response to client)
+}
+
+func sendError(w http.ResponseWriter, statusCode int, err string) {
+	errorMessage := map[string]string{"error": err}
+	sendResponse(w, statusCode, errorMessage)
+}
+
+func (app *App) getProducts(w http.ResponseWriter, r *http.Request) {
+	products, err := getProducts(app.DB)
+	if err != nil {
+		sendError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	sendResponse(w, http.StatusOK, products)
+}
+
+func getProducts(db *gorm.DB) ([]Product, error) {
+	product := Product{}
+	result := db.Find(&product)
+
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return []Product{product}, nil // TODO
+}
+
+func (app *App) handleRoutes() {
+	app.Router.HandleFunc("/products", getProducts).Methods("GET")
+}
