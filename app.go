@@ -137,6 +137,8 @@ func (app *App) handleRoutes() {
 	app.Router.HandleFunc("/products", app.getProducts).Methods("GET")
 	app.Router.HandleFunc("/product/{id}", app.getProduct).Methods("GET")
 	app.Router.HandleFunc("/product", app.createProduct).Methods("POST")
+	app.Router.HandleFunc("/product/{id}", app.updateProduct).Methods("PUT")
+	app.Router.HandleFunc("/product/{id}", app.deleteProduct).Methods("DELETE")
 }
 
 func getProducts(db *gorm.DB) ([]Product, error) {
@@ -157,4 +159,65 @@ func (p *Product) createProduct(db *gorm.DB) error {
 	}
 
 	return nil
+}
+
+func (app *App) updateProduct(writer http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id, err := strconv.Atoi(vars["id"])
+
+	if err != nil {
+		sendError(writer, http.StatusBadRequest, "Invalid product ID")
+		return
+	}
+
+	product := Product{}
+	result := app.DB.First(&product, id)
+
+	if result.Error != nil {
+		sendError(writer, http.StatusNotFound, "Product not found")
+		return
+	}
+
+	err = json.NewDecoder(r.Body).Decode(&product) // decode request body into product struct
+
+	if err != nil {
+		sendError(writer, http.StatusBadRequest, "Invalid request payload")
+		return
+	}
+
+	result = app.DB.Save(&product)
+
+	if result.Error != nil {
+		sendError(writer, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	sendResponse(writer, http.StatusOK, product)
+}
+
+func (app *App) deleteProduct(writer http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id, err := strconv.Atoi(vars["id"])
+
+	if err != nil {
+		sendError(writer, http.StatusBadRequest, "Invalid product ID")
+		return
+	}
+
+	product := Product{}
+	result := app.DB.First(&product, id)
+
+	if result.Error != nil {
+		sendError(writer, http.StatusNotFound, "Product not found")
+		return
+	}
+
+	result = app.DB.Delete(&product)
+
+	if result.Error != nil {
+		sendError(writer, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	sendResponse(writer, http.StatusOK, product)
 }
