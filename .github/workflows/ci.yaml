@@ -3,15 +3,21 @@ on: push
 jobs:
   run_code_checks:
     runs-on: ubuntu-latest
+    services:
+        postgres:
+            image: postgres:latest
+            ports:
+              - 5432:5432
+            env:
+              POSTGRES_USER: postgres
+              POSTGRES_PASSWORD: mysecretpassword
+            options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
     steps:
       - name: Set up Postgres
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: mysecretpassword
         run: |
-          sudo /etc/init.d/postgresql start
-          psql -h localhost -U $POSTGRES_USER -d postgres -c "ALTER USER $POSTGRES_USER WITH PASSWORD '$POSTGRES_PASSWORD';"
-          psql -h localhost -U $POSTGRES_USER -c "CREATE DATABASE testdb"
+          sudo service postgresql start
+          sudo -u postgres psql -c "ALTER USER postgres PASSWORD 'mysecretpassword';"
+          sudo -u postgres createdb testdb
 
       - name: Checkout source code
         uses: actions/checkout@v2
