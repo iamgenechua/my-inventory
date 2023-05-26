@@ -16,7 +16,7 @@ jobs:
     steps:
       - name: Set up PostgreSQL
         run: |
-          psql -h localhost -U postgres -p 5432 -c "CREATE DATABASE testdb" --password myseretpassword
+          PGPASSWORD=mysecretpassword psql -h localhost -U postgres -p 5432 -c "CREATE DATABASE testdb"
       
 
       - name: Checkout source code
