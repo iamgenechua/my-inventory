@@ -12,7 +12,7 @@ func main() {
 	app.PopulateDatabase()
 
 	// this is to listen to the interrupt signal and close the database connection gracefully
-	gracefulStop := make(chan os.Signal)
+	gracefulStop := make(chan os.Signal, 1)
 	signal.Notify(gracefulStop, syscall.SIGTERM)
 	signal.Notify(gracefulStop, syscall.SIGINT)
 	go func() {

@@ -24,7 +24,6 @@ func (app *App) Initialize(dbUser, dbPassword, dbName string) error {
 
 	if err != nil {
 		panic("failed to connect to database")
-		return err
 	}
 
 	app.Router = mux.NewRouter().StrictSlash(true)
@@ -53,14 +52,12 @@ func (app *App) CloseDatabase() error {
 	dbSQL, err := app.DB.DB()
 	if err != nil {
 		panic("failed to get DB instance")
-		return err
 	}
 
 	// clear Product table
 	result := app.DB.Where("1=1").Delete(&Product{})
 	if result.Error != nil {
 		panic("failed to clear the table")
-		return result.Error
 	}
 
 	dbSQL.Close()
