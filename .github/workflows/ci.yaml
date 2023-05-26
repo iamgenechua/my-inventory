@@ -11,13 +11,13 @@ jobs:
             env:
               POSTGRES_USER: postgres
               POSTGRES_PASSWORD: mysecretpassword
+              POSTGRES_DB: testdb
             options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
     steps:
-      - name: Set up Postgres
+      - name: Set up PostgreSQL
         run: |
-          sudo service postgresql start
-          sudo -u postgres psql -c "ALTER USER postgres PASSWORD 'mysecretpassword';"
-          sudo -u postgres createdb testdb
+          psql -h localhost -U postgres -p 5432 -c "CREATE DATABASE testdb"
+      
 
       - name: Checkout source code
         uses: actions/checkout@v2
