@@ -16,8 +16,7 @@ jobs:
     steps:
       - name: Set up PostgreSQL
         run: |
-          PGPASSWORD=mysecretpassword psql -h localhost -U postgres -p 5432 -c "CREATE DATABASE testdb"
-      
+          PGPASSWORD=mysecretpassword psql -h localhost -U postgres -p 5432
 
       - name: Checkout source code
         uses: actions/checkout@v2
