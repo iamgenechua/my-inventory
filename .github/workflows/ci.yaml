@@ -6,10 +6,6 @@ jobs:
     services:
         postgres:
             image: postgres
-            env:
-              POSTGRES_USER: postgres
-              POSTGRES_PASSWORD: mysecretpassword
-              POSTGRES_DB: testdb
             ports:
             - 5432:5432
     steps:
@@ -18,8 +14,8 @@ jobs:
 
       - name: Set up Postgres
         run: |
-          psql -h localhost -U postgres -p 5432 -c "CREATE DATABASE testdb"
-          psql -h localhost -U postgres -p 5432 -d testdb -f db/migrations.sql
+          psql -h localhost -U postgres -p 5432 -c "CREATE DATABASE testdb" -W mysecretpassword
+          psql -h localhost -U postgres -p 5432 -d testdb -f db/migrations.sql -W mysecretpassword
           
       - name: Set up Go
         uses: actions/setup-go@v2
