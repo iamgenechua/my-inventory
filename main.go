@@ -8,7 +8,7 @@ import (
 
 func main() {
 	app := App{}
-	app.Initialize()
+	app.Initialize("postgres", "mysecretpassword", "postgres")
 	app.PopulateDatabase()
 
 	// this is to listen to the interrupt signal and close the database connection gracefully

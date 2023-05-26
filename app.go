@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/gorilla/mux"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -15,8 +16,9 @@ type App struct {
 	DB     *gorm.DB
 }
 
-func (app *App) Initialize() error {
-	dsn := "host=localhost user=postgres password=mysecretpassword dbname=postgres port=5432 sslmode=disable"
+func (app *App) Initialize(dbUser, dbPassword, dbName string) error {
+	dsn := fmt.Sprintf("host=localhost user=%s password=%s dbname=%s port=5432 sslmode=disable", dbUser, dbPassword, dbName)
+
 	var err error
 	app.DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
 
