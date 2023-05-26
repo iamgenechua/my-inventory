@@ -3,24 +3,19 @@ on: push
 jobs:
   run_code_checks:
     runs-on: ubuntu-latest
-    services:
-        postgres:
-            image: postgres
-            env:
-              POSTGRES_USER: postgres
-              POSTGRES_PASSWORD: mysecretpassword
-              POSTGRES_DB: testdb
-            ports:
-            - 5432:5432
     steps:
+      - name: Set up Postgres
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: mysecretpassword
+        run: |
+          sudo /etc/init.d/postgresql start
+          psql -h localhost -U $POSTGRES_USER -d postgres -c "ALTER USER $POSTGRES_USER WITH PASSWORD '$POSTGRES_PASSWORD';"
+          psql -h localhost -U $POSTGRES_USER -c "CREATE DATABASE testdb"
+
       - name: Checkout source code
         uses: actions/checkout@v2
 
-      - name: Set up Postgres
-        run: |
-          psql -h localhost -U postgres -p 5432 -c "CREATE DATABASE testdb"
-          psql -h localhost -U postgres -p 5432 -d testdb -f db/migrations.sql
-          
       - name: Set up Go
         uses: actions/setup-go@v2
         with:
